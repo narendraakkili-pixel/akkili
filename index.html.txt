@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Home Manager Secure</title>
+
+<style>
+body {
+    margin: 0;
+    font-family: system-ui;
+    background: linear-gradient(135deg,#4facfe,#00f2fe);
+    min-height: 100vh;
+}
+.hidden { display: none; }
+.card {
+    background: white;
+    border-radius: 16px;
+    padding: 20px;
+    box-shadow: 0 10px 25px rgba(0,0,0,.15);
+    margin-bottom: 15px;
+}
+button {
+    width: 100%;
+    padding: 12px;
+    border-radius: 10px;
+    border: none;
+    background: #4facfe;
+    color: white;
+    font-size: 16px;
+}
+input {
+    width: 100%;
+    padding: 12px;
+    border-radius: 10px;
+    border: 1px solid #ccc;
+    margin-bottom: 10px;
+}
+header {
+    background: #4facfe;
+    color: white;
+    padding: 16px;
+    text-align: center;
+    font-size: 20px;
+}
+nav {
+    display: flex;
+    background: white;
+}
+nav button {
+    background: none;
+    color: black;
+}
+nav button.active {
+    border-bottom: 3px solid #4facfe;
+    color: #4facfe;
+}
+section { display:none; padding: 15px; }
+section.active { display:block; }
+li {
+    list-style: none;
+    padding: 10px;
+    background: #eef6ff;
+    border-radius: 10px;
+    margin-bottom: 8px;
+    display: flex;
+    justify-content: space-between;
+}
+</style>
+</head>
+
+<body>
+
+<!-- LOGIN -->
+<div id="login">
+    <div class="card" style="margin:80px auto; max-width:350px;">
+        <h2>📱 Mobile Authorization</h2>
+        <input type="tel" id="mobile" placeholder="Enter Mobile Number">
+        <button onclick="login()">Continue</button>
+        <p id="msg" style="color:red;"></p>
+    </div>
+</div>
+
+<!-- APP -->
+<div id="app" class="hidden">
+<header>🏠 Home Manager</header>
+
+<nav>
+    <button class="active" onclick="tab('dash')">Home</button>
+    <button onclick="tab('admin')" id="adminBtn">Admin</button>
+</nav>
+
+<section id="dash" class="active">
+    <div class="card">
+        <h3>✅ Authorized Access</h3>
+        <p>Welcome to your private home system.</p>
+        <button onclick="logout()">Logout</button>
+    </div>
+</section>
+
+<section id="admin">
+    <div class="card">
+        <h3>👑 Admin Panel</h3>
+        <input type="tel" id="newUser" placeholder="Add Mobile Number">
+        <button onclick="addUser()">Approve Number</button>
+    </div>
+
+    <div class="card">
+        <h4>Allowed Users</h4>
+        <ul id="userList"></ul>
+    </div>
+</section>
+
+</div>
+
+<script>
+const ADMIN_MOBILE = "9494542657"; // 
+
+let allowedUsers = JSON.parse(localStorage.getItem("allowedUsers")) || [ADMIN_MOBILE];
+let currentUser = "";
+
+function login() {
+    const mob = mobile.value.trim();
+    if (mob.length < 10) {
+        msg.innerText = "Enter valid mobile number";
+        return;
+    }
+    if (!allowedUsers.includes(mob)) {
+        msg.innerText = "Access denied. Contact admin.";
+        return;
+    }
+    currentUser = mob;
+    localStorage.setItem("currentUser", mob);
+    showApp();
+}
+
+function showApp() {
+    login.classList.add("hidden");
+    app.classList.remove("hidden");
+
+    if (currentUser !== ADMIN_MOBILE) {
+        adminBtn.style.display = "none";
+    } else {
+        renderUsers();
+    }
+}
+
+function logout() {
+    localStorage.removeItem("currentUser");
+    location.reload();
+}
+
+function tab(id) {
+    document.querySelectorAll("section").forEach(s=>s.classList.remove("active"));
+    document.querySelectorAll("nav button").forEach(b=>b.classList.remove("active"));
+    document.getElementById(id).classList.add("active");
+    event.target.classList.add("active");
+}
+
+function addUser() {
+    const mob = newUser.value.trim();
+    if (!mob || allowedUsers.includes(mob)) return;
+    allowedUsers.push(mob);
+    localStorage.setItem("allowedUsers", JSON.stringify(allowedUsers));
+    newUser.value="";
+    renderUsers();
+}
+
+function removeUser(mob) {
+    if (mob === ADMIN_MOBILE) return;
+    allowedUsers = allowedUsers.filter(u=>u!==mob);
+    localStorage.setItem("allowedUsers", JSON.stringify(allowedUsers));
+    renderUsers();
+}
+
+function renderUsers() {
+    userList.innerHTML="";
+    allowedUsers.forEach(u=>{
+        userList.innerHTML+=`
+        <li>
+            ${u}
+            ${u!==ADMIN_MOBILE ? `<button onclick="removeUser('${u}')">❌</button>` : ''}
+        </li>`;
+    });
+}
+
+if (localStorage.getItem("currentUser")) {
+    currentUser = localStorage.getItem("currentUser");
+    showApp();
+}
+</script>
+
+</body>
+</html>
